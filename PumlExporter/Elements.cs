@@ -1,13 +1,17 @@
 namespace PumlExporter;
 
-public class ColorOptions
+public class Elements : PumlObject
 {
     public string TextColor { get; }
     public string RectColor { get; }
 
-    public ColorOptions(string textColor, string rectColor)
+    public Elements(string textColor, string rectColor)
     {
         TextColor = textColor;
         RectColor = rectColor;
+    }
+    public override string ToString()
+    {
+        return "elem_";
     }
 }

@@ -1,9 +1,10 @@
 using System.Xml;
+
 namespace PumlExporter;
 
 public class PumalExporter
 {
-    private readonly ColorOptions _colorOptions;
+    private PumlObject _objectType = new Elements("#000000", "#C5CECE");
     private readonly string _lastFilePath;
     private readonly string _newFilePath;
     private readonly XmlDocument _newDocument = new();
@@ -13,23 +14,22 @@ public class PumalExporter
     private readonly Dictionary<string, XmlNodeList> _nodesOfOldFile = new();
 
 
-    public PumalExporter(ColorOptions colorOptions, string lastFilePath, string newFilePath )
+    public PumalExporter(string lastFilePath, string newFilePath)
     {
-        _colorOptions = colorOptions;
         _lastFilePath = lastFilePath;
         _newFilePath = newFilePath;
     }
 
 
-    private (XmlNodeList? oldNodeList, XmlNodeList? newNodeList) GetNodesOfBothFiles(ObjectType type,
+    private (XmlNodeList? oldNodeList, XmlNodeList? newNodeList) GetNodesOfBothFiles(PumlObject type,
         XmlDocument oldDocument,
         XmlNamespaceManager nameSpaceManager)
     {
         var oldNodeList =
-            oldDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{type.ToText()}')]",
+            oldDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{type}')]",
                 nameSpaceManager);
         var newNodeList =
-            _newDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{type.ToText()}')]",
+            _newDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{type}')]",
                 nameSpaceManager);
 
         return (oldNodeList, newNodeList);
@@ -84,11 +84,17 @@ public class PumalExporter
         }
     }
 
-    private void UpdateNewFile(ObjectType objectType)
+    private void UpdateNewFile(PumlObject objectType)
     {
-        var (oldNodes, newNodes) = GetNodesOfBothFiles(objectType, OldDocument, _nameSpaceManager);
+        _objectType = objectType;
+        UpdateNewFile();
+    }
+
+    private void UpdateNewFile()
+    {
+        var (oldNodes, newNodes) = GetNodesOfBothFiles(_objectType, OldDocument, _nameSpaceManager);
         if (oldNodes == null || newNodes == null) return;
-        if (objectType == ObjectType.Element)
+        if (_objectType.ToString() == "elem_")
         {
             GetUpdatedElementsOfNewFile(oldNodes, newNodes);
         }
@@ -102,11 +108,11 @@ public class PumalExporter
     {
         if (newClass && node.Name == "rect")
         {
-            node.SetAttribute("fill", _colorOptions.RectColor);
+            node.SetAttribute("fill", ((Elements)_objectType).RectColor);
         }
         else if (node.Name == "text")
         {
-            node.SetAttribute("fill", _colorOptions.TextColor);
+            node.SetAttribute("fill", ((Elements)_objectType).TextColor);
             node.SetAttribute("font-size", 14.ToString());
         }
     }
@@ -132,11 +138,23 @@ public class PumalExporter
     }
 
 
-    public void ExportFile(string updatedFilePath)
+    public void ExportFile(string updatedFilePath, params PumlObject[] types)
     {
         ImportFile();
-        UpdateNewFile(ObjectType.Element);
-        //add more
+        if (types.Length == 0)
+        {
+            UpdateNewFile();
+        }
+
+        foreach (var objectType in types)
+        {
+            UpdateNewFile(objectType);
+        }
+
         _newDocument.Save(Path.Combine(updatedFilePath));
+
+        //add more
     }
+
+     
 }
