@@ -1,32 +1,23 @@
-using System.IO;
 using System.Xml;
-
 namespace PumlExporter;
 
 public class PumalExporter
 {
     private readonly ColorOptions _colorOptions;
     private readonly string _lastFilePath;
-
     private readonly string _newFilePath;
-
-    private readonly string _updatedFilePath;
-
     private readonly XmlDocument _newDocument = new();
-
     private static readonly XmlDocument OldDocument = new();
     private readonly XmlNamespaceManager _nameSpaceManager = new(OldDocument.NameTable);
 
     private readonly Dictionary<string, XmlNodeList> _nodesOfOldFile = new();
 
 
-    public PumalExporter(ColorOptions colorOptions, string lastFilePath, string newFilePath, string updatedFilePath)
+    public PumalExporter(ColorOptions colorOptions, string lastFilePath, string newFilePath )
     {
         _colorOptions = colorOptions;
         _lastFilePath = lastFilePath;
         _newFilePath = newFilePath;
-        _updatedFilePath = updatedFilePath;
-        ExportFile();
     }
 
 
@@ -46,7 +37,6 @@ public class PumalExporter
 
     private void ImportFile()
     {
-
         var files = new FileInput(_lastFilePath, _newFilePath);
         OldDocument.Load(files.OldDataReader);
         _newDocument.Load(files.NewDataReader);
@@ -102,10 +92,10 @@ public class PumalExporter
         {
             GetUpdatedElementsOfNewFile(oldNodes, newNodes);
         }
-        else
-        {
-            // UpdateLInksOfNewFile(oldNodes, newNodes);
-        }
+        // else
+        // {
+        //     UpdateLInksOfNewFile(oldNodes, newNodes);
+        // }
     }
 
     private void HighLightElements(XmlElement node, bool newClass)
@@ -142,11 +132,11 @@ public class PumalExporter
     }
 
 
-    private void ExportFile()
+    public void ExportFile(string updatedFilePath)
     {
         ImportFile();
         UpdateNewFile(ObjectType.Element);
         //add more
-        _newDocument.Save(Path.Combine(_updatedFilePath));
+        _newDocument.Save(Path.Combine(updatedFilePath));
     }
 }
