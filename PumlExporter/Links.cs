@@ -1,6 +1,6 @@
 namespace PumlExporter;
 
-public class Links : PumlObject
+public class Links : PumlType
 {
     
 }

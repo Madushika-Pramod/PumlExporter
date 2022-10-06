@@ -1,6 +1,6 @@
 namespace PumlExporter;
 
-public class Elements : PumlObject
+public class Elements : PumlType
 {
     public string TextColor { get; }
     public string RectColor { get; }
