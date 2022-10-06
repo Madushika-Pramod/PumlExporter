@@ -4,13 +4,13 @@ namespace PumlExporter;
 
 public class PumalDecorator // can be static?
 {
-    private PumlObject _objectType = new Elements("#000000", "#C5CECE");
+    private PumlType _typeType = new Elements("#000000", "#C5CECE");
     private XmlDocument _newDocument = new();
     private static XmlDocument _oldDocument = new();
     private readonly XmlNamespaceManager _nameSpaceManager = new(_oldDocument.NameTable);
     private readonly Dictionary<string, XmlNodeList> _oldFileNodes = new();
 
-    private (XmlNodeList? oldNodeList, XmlNodeList? newNodeList) GetNodeLists(PumlObject type)
+    private (XmlNodeList? oldNodeList, XmlNodeList? newNodeList) GetNodeLists(PumlType type)
     {
         var oldNodeList =
             _oldDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{type}')]",
@@ -61,20 +61,20 @@ public class PumalDecorator // can be static?
         }
     }
 
-    private void UpdateNewFile(PumlObject objectType)
+    private void UpdateNewFile(PumlType typeType)
     {
-        _objectType = objectType;
+        _typeType = typeType;
         UpdateNewFile();
     }
 
     private void UpdateNewFile()
     {
-        var (oldNodes, newNodes) = GetNodeLists(_objectType);
+        var (oldNodes, newNodes) = GetNodeLists(_typeType);
         if (oldNodes == null || newNodes == null)
         {
             throw new Exception("old file or new file doesn't contain elements");
         }
-        if (_objectType.GetType() == typeof(Elements))
+        if (_typeType.GetType() == typeof(Elements))
         {
             HighLightNewElements(oldNodes, newNodes);
         }
@@ -88,11 +88,11 @@ public class PumalDecorator // can be static?
     {
         if (newClass && node.Name == "rect")
         {
-            node.SetAttribute("fill", ((Elements)_objectType).RectColor);
+            node.SetAttribute("fill", ((Elements)_typeType).RectColor);
         }
         else if (node.Name == "text")
         {
-            node.SetAttribute("fill", ((Elements)_objectType).TextColor);
+            node.SetAttribute("fill", ((Elements)_typeType).TextColor);
             node.SetAttribute("font-size", 14.ToString());
         }
     }
@@ -118,7 +118,7 @@ public class PumalDecorator // can be static?
     }
 
 
-    public void ExportFile(NewFile newFile, OldFile oldFile, RelativeFilePath updatedFilePath, params PumlObject[] types)
+    public void ExportFile(NewFile newFile, OldFile oldFile, RelativeFilePath updatedFilePath, params PumlType[] types)
     {
         _nameSpaceManager.AddNamespace("s", "http://www.w3.org/2000/svg");
         _nameSpaceManager.AddNamespace("xlink", "http://www.w3.org/1999/xlink");
