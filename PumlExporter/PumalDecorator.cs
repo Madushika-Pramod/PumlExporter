@@ -5,22 +5,22 @@ namespace PumlExporter;
 public class PumalDecorator // can be static?
 {
     private PumlType _type = new Elements("#000000", "#C5CECE");
-    private XmlDocument _newDocument = new();
-    private static XmlDocument _oldDocument = new();
-    private readonly XmlNamespaceManager _nameSpaceManager = new(_oldDocument.NameTable);
+    // private XmlDocument _newDocument = new();
+    // private static XmlDocument _oldDocument = new();
+
     private readonly Dictionary<string, XmlNodeList> _oldFileNodes = new();
 
-    private (XmlNodeList? oldNodeList, XmlNodeList? newNodeList) GetNodeLists(PumlType type)
-    {
-        var oldNodeList =
-            _oldDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{type}')]",
-                _nameSpaceManager);
-        var newNodeList =
-            _newDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{type}')]",
-                _nameSpaceManager);
-
-        return (oldNodeList, newNodeList);
-    }
+    // private (XmlNodeList? oldNodeList, XmlNodeList? newNodeList) GetNodeLists(PumlType type)
+    // {
+    //     var oldNodeList =
+    //         _oldDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{type}')]",
+    //             _nameSpaceManager);
+    //     var newNodeList =
+    //         _newDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{type}')]",
+    //             _nameSpaceManager);
+    //
+    //     return (oldNodeList, newNodeList);
+    // }
 
     private void UpdateOldFileNodes(XmlNodeList oldNodeList)
     {
@@ -61,26 +61,27 @@ public class PumalDecorator // can be static?
         }
     }
 
-    private void UpdateNewDocument(PumlType type)
-    {
-        _type = type;
-        UpdateNewDocument();
-    }
+    // private void UpdateNewDocument(PumlType type)
+    // {
+    //     
+    //     UpdateNewDocument();
+    // }
 
-    private void UpdateNewDocument()
+    private void UpdateNewDocument(XmlNodeList? oldNodes, XmlNodeList? newNodes)
     {
-        var (oldNodes, newNodes) = GetNodeLists(_type);
+        // var (oldNodes, newNodes) = GetNodeLists(_type);
         if (oldNodes == null || newNodes == null)
         {
             throw new Exception("old file or new file doesn't contain elements");
         }
+
         if (_type.GetType() == typeof(Elements))
         {
             HighLightNewElements(oldNodes, newNodes);
         }
         // else
         // {
-        //     UpdateLInksOfNewFile(oldNodes, newNodes);
+        //     UpdateLInksOfNewFile(oldNodes, newNodes);// not implement
         // }
     }
 
@@ -120,23 +121,25 @@ public class PumalDecorator // can be static?
 
     public void ExportFile(NewFile newFile, OldFile oldFile, RelativeFilePath updatedFilePath, params PumlType[] types)
     {
-        _nameSpaceManager.AddNamespace("s", "http://www.w3.org/2000/svg");
-        _nameSpaceManager.AddNamespace("xlink", "http://www.w3.org/1999/xlink");
-        _oldDocument = oldFile.XmlDocument;
-        _newDocument = newFile.XmlDocument;
+        var nameSpaceManager = new XmlNamespaceManager(oldFile.XmlDocument.NameTable);
+        nameSpaceManager.AddNamespace("s", "http://www.w3.org/2000/svg");
+        nameSpaceManager.AddNamespace("xlink", "http://www.w3.org/1999/xlink");
+
 
         if (types.Length == 0)
         {
-            UpdateNewDocument();
-        }
-        else
-        {
-            foreach (var objectType in types)
-            {
-                UpdateNewDocument(objectType);
-            }
+            UpdateNewDocument(oldFile.GetNodeLists(_type, nameSpaceManager),
+                newFile.GetNodeLists(_type, nameSpaceManager));
         }
 
-        _newDocument.Save(Path.Combine(updatedFilePath.Path));
+
+        foreach (var objectType in types)
+        {
+            _type = objectType;
+            UpdateNewDocument(oldFile.GetNodeLists(objectType, nameSpaceManager),
+                newFile.GetNodeLists(objectType, nameSpaceManager));
+        }
+        newFile.XmlDocument.Save(Path.Combine(updatedFilePath.Path));
     }
 }
+

@@ -2,22 +2,16 @@ using System.Xml;
 
 namespace PumlExporter;
 
-public class OldFile
+public class OldFile: SvgFile
 {
-    public readonly XmlDocument XmlDocument;
-
-    private OldFile(Builder builder)
+    private OldFile(Builder builder): base(builder)
     {
-        XmlDocument = builder.XmlDocument;
     }
 
-    public class Builder
+    public new class Builder : SvgFile.Builder
     {
-        
-        internal readonly XmlDocument XmlDocument = new();
         // private XmlReader DataReader => new XmlTextReader(File.Open(_filePath, FileMode.Open));
-        private readonly XmlReader _dataReader;
-
+        private XmlReader DataReader { get; }
         public Builder(RelativeFilePath filePath):this(new XmlTextReader(File.Open(filePath.Path, FileMode.Open)))
         {
             // _filePath = filePath;
@@ -28,13 +22,15 @@ public class OldFile
 
         public Builder(XmlReader xmlReader)
         {
-            _dataReader = xmlReader;
+            DataReader = xmlReader;
         }
+
+        
 
         public OldFile Build()
         {
-            XmlDocument.Load(_dataReader);
-            return new(this);
+            XmlDocument.Load(DataReader);
+            return new OldFile(this);
         }
     }
 }
