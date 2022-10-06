@@ -7,6 +7,7 @@ public class PumalExporter
     private PumlObject _objectType = new Elements("#000000", "#C5CECE");
     private readonly string _lastFilePath;
     private readonly string _newFilePath;
+    
     private readonly XmlDocument _newDocument = new();
     private static readonly XmlDocument OldDocument = new();
     private readonly XmlNamespaceManager _nameSpaceManager = new(OldDocument.NameTable);
@@ -55,7 +56,7 @@ public class PumalExporter
     }
 
 
-    private void GetUpdatedElementsOfNewFile(XmlNodeList oldNodeList, XmlNodeList newNodeList)
+    private void UpdateElementsOfNewFile(XmlNodeList oldNodeList, XmlNodeList newNodeList)
     {
         GetNodesOfOldFile(oldNodeList);
 
@@ -94,9 +95,9 @@ public class PumalExporter
     {
         var (oldNodes, newNodes) = GetNodesOfBothFiles(_objectType, OldDocument, _nameSpaceManager);
         if (oldNodes == null || newNodes == null) return;
-        if (_objectType.ToString() == "elem_")
+        if (_objectType.GetType() == typeof(Elements))
         {
-            GetUpdatedElementsOfNewFile(oldNodes, newNodes);
+            UpdateElementsOfNewFile(oldNodes, newNodes);
         }
         // else
         // {
@@ -145,15 +146,16 @@ public class PumalExporter
         {
             UpdateNewFile();
         }
-
-        foreach (var objectType in types)
+        else
         {
-            UpdateNewFile(objectType);
+            
+            foreach (var objectType in types)
+            {
+                UpdateNewFile(objectType);
+            }
         }
-
         _newDocument.Save(Path.Combine(updatedFilePath));
-
-        //add more
+        
     }
 
      
