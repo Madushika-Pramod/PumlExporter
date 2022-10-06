@@ -1,6 +1,6 @@
 ﻿using PumlExporter;
 
-var file = new PumalExporter("../../../axon1.svg",
-    "../../../axon2.svg");
-// file.ExportFile("../../../axon-colored.svg", new Elements("#0f00f0", "#C000CE"));
-file.ExportFile("../../../axon-colored.svg");
+var oldFile = new OldFile.Builder(new RelativeFilePath("axon1.svg")).Build();
+var newFile = new NewFile.Builder(new RelativeFilePath("axon2.svg")).Update().Build();
+var decorator = new PumalDecorator();
+decorator.ExportFile(newFile, oldFile, new RelativeFilePath("axon-colored.svg"));

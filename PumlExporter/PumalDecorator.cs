@@ -2,63 +2,39 @@ using System.Xml;
 
 namespace PumlExporter;
 
-public class PumalExporter
+public class PumalDecorator // can be static?
 {
     private PumlObject _objectType = new Elements("#000000", "#C5CECE");
-    private readonly string _lastFilePath;
-    private readonly string _newFilePath;
-    
-    private readonly XmlDocument _newDocument = new();
-    private static readonly XmlDocument OldDocument = new();
-    private readonly XmlNamespaceManager _nameSpaceManager = new(OldDocument.NameTable);
+    private XmlDocument _newDocument = new();
+    private static XmlDocument _oldDocument = new();
+    private readonly XmlNamespaceManager _nameSpaceManager = new(_oldDocument.NameTable);
+    private readonly Dictionary<string, XmlNodeList> _oldFileNodes = new();
 
-    private readonly Dictionary<string, XmlNodeList> _nodesOfOldFile = new();
-
-
-    public PumalExporter(string lastFilePath, string newFilePath)
-    {
-        _lastFilePath = lastFilePath;
-        _newFilePath = newFilePath;
-    }
-
-
-    private (XmlNodeList? oldNodeList, XmlNodeList? newNodeList) GetNodesOfBothFiles(PumlObject type,
-        XmlDocument oldDocument,
-        XmlNamespaceManager nameSpaceManager)
+    private (XmlNodeList? oldNodeList, XmlNodeList? newNodeList) GetNodeLists(PumlObject type)
     {
         var oldNodeList =
-            oldDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{type}')]",
-                nameSpaceManager);
+            _oldDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{type}')]",
+                _nameSpaceManager);
         var newNodeList =
             _newDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{type}')]",
-                nameSpaceManager);
+                _nameSpaceManager);
 
         return (oldNodeList, newNodeList);
     }
 
-    private void ImportFile()
-    {
-        var files = new FileInput(_lastFilePath, _newFilePath);
-        OldDocument.Load(files.OldDataReader);
-        _newDocument.Load(files.NewDataReader);
-        _nameSpaceManager.AddNamespace("s", "http://www.w3.org/2000/svg");
-        _nameSpaceManager.AddNamespace("xlink", "http://www.w3.org/1999/xlink");
-    }
-
-    private void GetNodesOfOldFile(XmlNodeList oldNodeList)
+    private void UpdateOldFileNodes(XmlNodeList oldNodeList)
     {
         foreach (XmlElement node in oldNodeList)
         {
             var key = node.GetAttribute("id");
 
-            _nodesOfOldFile.Add(key, node.ChildNodes);
+            _oldFileNodes.Add(key, node.ChildNodes);
         }
     }
 
-
-    private void UpdateElementsOfNewFile(XmlNodeList oldNodeList, XmlNodeList newNodeList)
+    private void HighLightNewElements(XmlNodeList oldNodeList, XmlNodeList newNodeList)
     {
-        GetNodesOfOldFile(oldNodeList);
+        UpdateOldFileNodes(oldNodeList);
 
         foreach (XmlElement nodeOfNewFile in newNodeList)
         {
@@ -93,11 +69,14 @@ public class PumalExporter
 
     private void UpdateNewFile()
     {
-        var (oldNodes, newNodes) = GetNodesOfBothFiles(_objectType, OldDocument, _nameSpaceManager);
-        if (oldNodes == null || newNodes == null) return;
+        var (oldNodes, newNodes) = GetNodeLists(_objectType);
+        if (oldNodes == null || newNodes == null)
+        {
+            throw new Exception("old file or new file doesn't contain elements");
+        }
         if (_objectType.GetType() == typeof(Elements))
         {
-            UpdateElementsOfNewFile(oldNodes, newNodes);
+            HighLightNewElements(oldNodes, newNodes);
         }
         // else
         // {
@@ -121,13 +100,13 @@ public class PumalExporter
     private Dictionary<int, string> GetCommonMethods(string keyFromNewFile)
     {
         Dictionary<int, string> commonMethods = new();
-        if (!_nodesOfOldFile.ContainsKey(keyFromNewFile))
+        if (!_oldFileNodes.ContainsKey(keyFromNewFile))
         {
             return commonMethods;
         }
 
 
-        foreach (XmlElement node in _nodesOfOldFile[keyFromNewFile])
+        foreach (XmlElement node in _oldFileNodes[keyFromNewFile])
         {
             if (node.Name == "text")
             {
@@ -139,24 +118,25 @@ public class PumalExporter
     }
 
 
-    public void ExportFile(string updatedFilePath, params PumlObject[] types)
+    public void ExportFile(NewFile newFile, OldFile oldFile, RelativeFilePath updatedFilePath, params PumlObject[] types)
     {
-        ImportFile();
+        _nameSpaceManager.AddNamespace("s", "http://www.w3.org/2000/svg");
+        _nameSpaceManager.AddNamespace("xlink", "http://www.w3.org/1999/xlink");
+        _oldDocument = oldFile.XmlDocument;
+        _newDocument = newFile.XmlDocument;
+
         if (types.Length == 0)
         {
             UpdateNewFile();
         }
         else
         {
-            
             foreach (var objectType in types)
             {
                 UpdateNewFile(objectType);
             }
         }
-        _newDocument.Save(Path.Combine(updatedFilePath));
-        
-    }
 
-     
+        _newDocument.Save(Path.Combine(updatedFilePath.Path));
+    }
 }
