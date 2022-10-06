@@ -61,13 +61,13 @@ public class PumalDecorator // can be static?
         }
     }
 
-    private void UpdateNewFile(PumlType type)
+    private void UpdateNewDocument(PumlType type)
     {
         _type = type;
-        UpdateNewFile();
+        UpdateNewDocument();
     }
 
-    private void UpdateNewFile()
+    private void UpdateNewDocument()
     {
         var (oldNodes, newNodes) = GetNodeLists(_type);
         if (oldNodes == null || newNodes == null)
@@ -127,13 +127,13 @@ public class PumalDecorator // can be static?
 
         if (types.Length == 0)
         {
-            UpdateNewFile();
+            UpdateNewDocument();
         }
         else
         {
             foreach (var objectType in types)
             {
-                UpdateNewFile(objectType);
+                UpdateNewDocument(objectType);
             }
         }
 
