@@ -19,6 +19,6 @@ public abstract class SvgFile
 
     public abstract class Builder
     {
-        internal readonly XmlDocument XmlDocument = null!; // todo <==
+        public readonly XmlDocument XmlDocument = new(); // todo <==
     }
 }

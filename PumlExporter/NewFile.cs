@@ -7,6 +7,7 @@ public class NewFile : SvgFile
     private NewFile(Builder builder) : base(builder)
     {
     }
+    
 
     public new class Builder : SvgFile.Builder
     {
