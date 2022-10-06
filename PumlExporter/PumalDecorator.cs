@@ -1,45 +1,47 @@
 using System.Xml;
+
 namespace PumlExporter;
 
 public static class PumalDecorator // can be static?
 {
 
-    private static readonly Dictionary<string, XmlNodeList> OldFileNodes = new();
-    
-    private static void UpdateOldFileNodes(XmlNodeList oldNodeList)
+    private static Dictionary<string, XmlNodeList> OldFileNodes(XmlNodeList oldNodeList)
     {
+        var oldFileNodes = new Dictionary<string, XmlNodeList>();
         foreach (XmlElement node in oldNodeList)
         {
             var key = node.GetAttribute("id");
 
-            OldFileNodes.Add(key, node.ChildNodes);
+            oldFileNodes.Add(key, node.ChildNodes);
         }
+
+        return oldFileNodes;
     }
 
-    private static void HighLightNewElements(XmlNodeList oldNodeList, XmlNodeList newNodeList,PumlType type)
+    private static void HighLightNewElements(XmlNodeList oldNodeList, XmlNodeList newNodeList, PumlType type)
     {
-        UpdateOldFileNodes(oldNodeList);
+        // UpdateOldFileNodes(oldNodeList);
 
         foreach (XmlElement nodeOfNewFile in newNodeList)
         {
             // element Id
             var key = nodeOfNewFile.GetAttribute("id");
 
-            var commonMethods = GetCommonMethods(key);
+            var commonMethods = GetCommonMethods(key,oldNodeList);
 
             if (commonMethods.Count != 0)
             {
                 foreach (var node in nodeOfNewFile.Cast<XmlElement>().Where(n =>
                              !commonMethods.ContainsKey(n.InnerText.GetHashCode())))
                 {
-                    HighLightElements(node, false,type);
+                    HighLightElements(node, false, type);
                 }
             }
             else
             {
                 foreach (XmlElement newNode in nodeOfNewFile)
                 {
-                    HighLightElements(newNode, true,type);
+                    HighLightElements(newNode, true, type);
                 }
             }
         }
@@ -51,7 +53,7 @@ public static class PumalDecorator // can be static?
     //     UpdateNewDocument();
     // }
 
-    public static void UpdateNewDocument(XmlNodeList? oldNodes, XmlNodeList? newNodes,PumlType type )
+    public static void UpdateNewDocument(XmlNodeList? oldNodes, XmlNodeList? newNodes, PumlType type)
     {
         if (oldNodes == null || newNodes == null)
         {
@@ -60,7 +62,7 @@ public static class PumalDecorator // can be static?
 
         if (type.GetType() == typeof(Elements))
         {
-            HighLightNewElements(oldNodes, newNodes,type);
+            HighLightNewElements(oldNodes, newNodes, type);
         }
         // else
         // {
@@ -68,7 +70,7 @@ public static class PumalDecorator // can be static?
         // }
     }
 
-    private static void HighLightElements(XmlElement node, bool newClass,PumlType type)
+    private static void HighLightElements(XmlElement node, bool newClass, PumlType type)
     {
         if (newClass && node.Name == "rect")
         {
@@ -81,16 +83,17 @@ public static class PumalDecorator // can be static?
         }
     }
 
-    private static Dictionary<int, string> GetCommonMethods(string keyFromNewFile)
+    private static Dictionary<int, string> GetCommonMethods(string keyFromNewFile,XmlNodeList oldNodeList)
     {
-        Dictionary<int, string> commonMethods = new();
-        if (!OldFileNodes.ContainsKey(keyFromNewFile))
+        var commonMethods = new Dictionary<int, string>();
+        var oldFileNodes = OldFileNodes(oldNodeList);
+        if (!oldFileNodes.ContainsKey(keyFromNewFile))
         {
             return commonMethods;
         }
 
 
-        foreach (XmlElement node in OldFileNodes[keyFromNewFile])
+        foreach (XmlElement node in oldFileNodes[keyFromNewFile])
         {
             if (node.Name == "text")
             {
@@ -101,4 +104,3 @@ public static class PumalDecorator // can be static?
         return commonMethods;
     }
 }
-
