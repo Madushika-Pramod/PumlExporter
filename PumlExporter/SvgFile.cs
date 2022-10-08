@@ -30,7 +30,7 @@ public abstract class SvgFile
                    throw new InvalidOperationException();
              
         }
-        public Builder SetElementsAndLinks(params ObjectType[] types) // what's the difference override and new
+        public Builder SetElements(params ObjectType[] types) // what's the difference override and new
         {
             if (types == null)
             {

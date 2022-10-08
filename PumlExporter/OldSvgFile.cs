@@ -2,9 +2,9 @@ using System.Xml;
 
 namespace PumlExporter;
 
-public class OldFile: SvgFile
+public class OldSvgFile: SvgFile
 {
-    private OldFile(Builder builder): base(builder)
+    private OldSvgFile(Builder builder): base(builder)
     {
     }
     private static Dictionary<string, XmlNodeList> OldFileNodes(XmlNodeList oldNodeList)
@@ -38,15 +38,15 @@ public class OldFile: SvgFile
         }
 
 
-        public new Builder SetElementsAndLinks(params ObjectType[] types) // what's the difference override and new
+        public new Builder SetElements(params ObjectType[] types) // what's the difference override and new
         {
             XmlDocument.Load(DataReader);
-            return (Builder)base.SetElementsAndLinks(types);
+            return (Builder)base.SetElements(types);
         }
 
-        public OldFile Build()
+        public OldSvgFile Build()
         {
-            return new OldFile(this);
+            return new OldSvgFile(this);
         }
     }
 }

@@ -4,7 +4,7 @@ namespace PumlExporter;
 
 public static class Update
 {
-    public static void UpdateNewDocument(XmlNodeList? oldElements, XmlNodeList? newElements, ColorOptions colorOptions)
+    public static void UpdateFile(XmlNodeList? oldElements, XmlNodeList? newElements, ColorOptions colorOptions)
     {
         if (oldElements == null || newElements == null)
         {

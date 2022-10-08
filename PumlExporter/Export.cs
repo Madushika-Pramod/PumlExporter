@@ -3,25 +3,22 @@ namespace PumlExporter;
 public static class Export
 {
     public static void ExportFile(RelativeFilePath updatedFilePath,
-        params ColorOptions[] types)
+        params ColorOptions[] colorOptions)
     {
-        var oldFile = new OldFile.Builder(new RelativeFilePath("axon1.svg")).SetElementsAndLinks(ObjectType.Element).Build();
-        var newFile = new NewFile.Builder(new RelativeFilePath("axon2.svg")).Update().SetElementsAndLinks(ObjectType.Element)
+        var oldFile = new OldSvgFile.Builder(new RelativeFilePath("axon1.svg")).SetElements(ObjectType.Element) // type should be removed
             .Build();
-
-
-        if (types.Length == 0)
+        var newFile = new NewSvgFile.Builder(new RelativeFilePath("axon2.svg")).Update()
+            .SetElements(ObjectType.Element)
+            .Build();
+        
+        if (colorOptions.Length == 0)
         {
-            types = new ColorOptions[]{new ColorOptionsForElement("#000000", "#C5CECE")};
-            // var type = new Elements("#000000", "#C5CECE");
-            // PumalDecorator.UpdateNewDocument(oldFile.Elements, newFile.Elements, type);
+            colorOptions = new ColorOptions[] { new ColorOptionsForElement("#000000", "#C5CECE") };
         }
-
-
-        foreach (var objectType in types)
+        
+        foreach (var objectType in colorOptions)
         {
-            // _type = objectType;
-            Update.UpdateNewDocument(oldFile.Elements, newFile.Elements, objectType);
+            Update.UpdateFile(oldFile.Elements, newFile.Elements, objectType);
         }
 
         newFile.XmlDocument.Save(Path.Combine(updatedFilePath.Path));
