@@ -7,7 +7,7 @@ public class NewFile : SvgFile
     private NewFile(Builder builder) : base(builder)
     {
     }
-    
+
 
     public new class Builder : SvgFile.Builder
     {
@@ -24,8 +24,6 @@ public class NewFile : SvgFile
             DataReader = new XmlTextReader(new StringReader(body));
         }
 
-        
-
 
         public Builder Update(string textColor = "#383838", string fontSize = "12")
         {
@@ -41,9 +39,14 @@ public class NewFile : SvgFile
             return this;
         }
 
-        public NewFile Build()
+        public new Builder SetElementsAndLinks(params ObjectType[] types) // what's the difference override and new
         {
             XmlDocument.Load(DataReader);
+            return (Builder)base.SetElementsAndLinks(types);
+        }
+
+        public NewFile Build()
+        {
             return new NewFile(this);
         }
     }

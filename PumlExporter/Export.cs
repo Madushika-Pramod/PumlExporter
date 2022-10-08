@@ -1,30 +1,27 @@
-using System.Xml;
-
 namespace PumlExporter;
 
 public static class Export
 {
-    public static void ExportFile(NewFile newFile, OldFile oldFile, RelativeFilePath updatedFilePath,
-        params PumlType[] types)
+    public static void ExportFile(RelativeFilePath updatedFilePath,
+        params ColorOptions[] types)
     {
-        var nameSpaceManager = new XmlNamespaceManager(oldFile.XmlDocument.NameTable);
-        nameSpaceManager.AddNamespace("s", "http://www.w3.org/2000/svg");
-        nameSpaceManager.AddNamespace("xlink", "http://www.w3.org/1999/xlink");
+        var oldFile = new OldFile.Builder(new RelativeFilePath("axon1.svg")).SetElementsAndLinks(ObjectType.Element).Build();
+        var newFile = new NewFile.Builder(new RelativeFilePath("axon2.svg")).Update().SetElementsAndLinks(ObjectType.Element)
+            .Build();
 
 
         if (types.Length == 0)
         {
-            var type = new Elements("#000000", "#C5CECE");
-            PumalDecorator.UpdateNewDocument(oldFile.GetNodeLists(type, nameSpaceManager),
-                newFile.GetNodeLists(type, nameSpaceManager), type);
+            types = new ColorOptions[]{new ElementColorOptions("#000000", "#C5CECE")};
+            // var type = new Elements("#000000", "#C5CECE");
+            // PumalDecorator.UpdateNewDocument(oldFile.Elements, newFile.Elements, type);
         }
 
 
         foreach (var objectType in types)
         {
             // _type = objectType;
-            PumalDecorator.UpdateNewDocument(oldFile.GetNodeLists(objectType, nameSpaceManager),
-                newFile.GetNodeLists(objectType, nameSpaceManager), objectType);
+            ElementHighLighter.UpdateNewDocument(oldFile.Elements, newFile.Elements, objectType);
         }
 
         newFile.XmlDocument.Save(Path.Combine(updatedFilePath.Path));

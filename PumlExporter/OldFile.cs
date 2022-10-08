@@ -25,11 +25,15 @@ public class OldFile: SvgFile
             DataReader = xmlReader;
         }
 
-        
+
+        public new Builder SetElementsAndLinks(params ObjectType[] types) // what's the difference override and new
+        {
+            XmlDocument.Load(DataReader);
+            return (Builder)base.SetElementsAndLinks(types);
+        }
 
         public OldFile Build()
         {
-            XmlDocument.Load(DataReader);
             return new OldFile(this);
         }
     }

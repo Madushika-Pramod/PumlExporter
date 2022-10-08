@@ -1,6 +1,6 @@
 namespace PumlExporter;
 
-public class Links : PumlType
+public class ColorOptions
 {
     
 }
