@@ -7,6 +7,18 @@ public class OldFile: SvgFile
     private OldFile(Builder builder): base(builder)
     {
     }
+    private static Dictionary<string, XmlNodeList> OldFileNodes(XmlNodeList oldNodeList)
+    {
+        var oldFileNodes = new Dictionary<string, XmlNodeList>();
+        foreach (XmlElement node in oldNodeList)
+        {
+            var key = node.GetAttribute("id");
+
+            oldFileNodes.Add(key, node.ChildNodes);
+        }
+
+        return oldFileNodes;
+    }
 
     public new class Builder : SvgFile.Builder
     {

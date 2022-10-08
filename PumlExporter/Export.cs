@@ -12,7 +12,7 @@ public static class Export
 
         if (types.Length == 0)
         {
-            types = new ColorOptions[]{new ElementColorOptions("#000000", "#C5CECE")};
+            types = new ColorOptions[]{new ColorOptionsForElement("#000000", "#C5CECE")};
             // var type = new Elements("#000000", "#C5CECE");
             // PumalDecorator.UpdateNewDocument(oldFile.Elements, newFile.Elements, type);
         }
@@ -21,7 +21,7 @@ public static class Export
         foreach (var objectType in types)
         {
             // _type = objectType;
-            ElementHighLighter.UpdateNewDocument(oldFile.Elements, newFile.Elements, objectType);
+            Update.UpdateNewDocument(oldFile.Elements, newFile.Elements, objectType);
         }
 
         newFile.XmlDocument.Save(Path.Combine(updatedFilePath.Path));
