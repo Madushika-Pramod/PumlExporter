@@ -2,58 +2,36 @@ using System.Xml;
 
 namespace PumlExporter;
 
-public class HighLight
+public static class HighLight
 {
-    
-    internal readonly XmlNamespaceManager NamespaceManager;
-    internal readonly XmlDocument XmlDocument;
-    
-
-    public HighLight(XmlDocument newXmlDocument, XmlNamespaceManager namespaceManager)
+    public static void ExportFile(RelativeFilePath updatedFilePath,
+        params ColorOptions[] colorOptions)
     {
-        XmlDocument = newXmlDocument;
-        NamespaceManager = namespaceManager;
-    }
-    private static void HighLightChildren(XmlElement node, bool newClass, ColorOptionsForElement colorOptions)
-    {
-        if (newClass && node.Name == "rect")
-        {
-            node.SetAttribute("fill", colorOptions.RectColor);
-        }
-        else if (node.Name == "text")
-        {
-            node.SetAttribute("fill", colorOptions.TextColor);
-            node.SetAttribute("font-size", 14.ToString());
-        }
-    }
-    public void HighLightNewElements(XmlDocument oldXmlDocument, ColorOptionsForElement options)
-    {
-        var newElements = XmlDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'elem_')]", NamespaceManager) ??
-                          throw new Exception("new XmlDocument doesn't have element nodes");
-        var oldElements = oldXmlDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'elem_')]", NamespaceManager) ??
-                          throw new Exception("old XmlDocument doesn't have element nodes");
+        var xmlDocument = SvgFile.GetXml(new RelativeFilePath("axon2.svg"));
+        var nameSpaceManager = new XmlNamespaceManager(xmlDocument.NameTable);
+        nameSpaceManager.AddNamespace("s", "http://www.w3.org/2000/svg");
+        nameSpaceManager.AddNamespace("xlink", "http://www.w3.org/1999/xlink");
+        var highLighter = new PreUpdateSvg(xmlDocument, nameSpaceManager);
+        highLighter.UpdateText(new Attribute("fill", "#383838"),
+            new Attribute("font-size", "12"));
 
-        foreach (XmlElement newElement in newElements)
+        if (colorOptions.Length != 0)
         {
-            var key = newElement.GetAttribute("id");
-
-            var commonTextNodes = CommonNodes.GetCommonTextNodes(key, oldElements);
-
-            if (commonTextNodes.Count != 0)
+            foreach (var colorOption in colorOptions)
             {
-                foreach (var child in newElement.Cast<XmlElement>().Where(n =>
-                             !commonTextNodes.ContainsKey(n.InnerText.GetHashCode())))
+                if (colorOption.GetType() == typeof(ColorOptionsForElement))
                 {
-                    HighLightChildren(child, false, options);
-                }
-            }
-            else
-            {
-                foreach (XmlElement newNode in newElement)
-                {
-                    HighLightChildren(newNode, true, options);
+                    highLighter.HighLight(SvgFile.GetXml(new RelativeFilePath("axon1.svg")),
+                        (ColorOptionsForElement)colorOption);
                 }
             }
         }
+        else
+        {
+            highLighter.HighLight(SvgFile.GetXml(new RelativeFilePath("axon1.svg")),
+                new ColorOptionsForElement("#000000", "#C5CECE"));
+        }
+
+        highLighter.GetXmlDocument().Save(Path.Combine(updatedFilePath.Path));
     }
 }

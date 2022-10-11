@@ -4,10 +4,19 @@ namespace PumlExporter;
 
 public static class SvgFile
 {
-    public static XmlDocument GetXmlDocument(RelativeFilePath filePath)
+    public static XmlDocument GetXml(RelativeFilePath filePath)
+    {
+        var reader = new XmlTextReader(File.Open(filePath.Path, FileMode.Open));
+        return GetXml(reader);
+    }
+    public static XmlDocument GetXml(string body)
+    {
+        var reader = new XmlTextReader(new StringReader(body));
+        return GetXml(reader);
+    }
+    public static XmlDocument GetXml(XmlTextReader reader)
     {
         XmlDocument xmlDocument = new();
-        var reader = new XmlTextReader(File.Open(filePath.Path, FileMode.Open));
         xmlDocument.Load(reader);
         return xmlDocument;
     }
