@@ -11,8 +11,9 @@ public static class HighLight
         var nameSpaceManager = new XmlNamespaceManager(xmlDocument.NameTable);
         nameSpaceManager.AddNamespace("s", "http://www.w3.org/2000/svg");
         nameSpaceManager.AddNamespace("xlink", "http://www.w3.org/1999/xlink");
-        var highLighter = new PreUpdateSvg(xmlDocument, nameSpaceManager);
-        highLighter.UpdateText(new Attribute("fill", "#383838"),
+        var highLighter = new HighLightXml(xmlDocument, nameSpaceManager);
+        //default value doesn't work
+        highLighter.SvgGlobalHighLight("text",new Attribute("fill", "#383838"),
             new Attribute("font-size", "12"));
 
         if (colorOptions.Length != 0)
@@ -21,14 +22,14 @@ public static class HighLight
             {
                 if (colorOption.GetType() == typeof(ColorOptionsForElement))
                 {
-                    highLighter.HighLight(SvgFile.GetXml(new RelativeFilePath("axon1.svg")),
-                        (ColorOptionsForElement)colorOption);
+                    highLighter.SvgElementChangesHighLight(
+                        SvgFile.GetXml(new RelativeFilePath("axon1.svg")), (ColorOptionsForElement)colorOption);
                 }
             }
         }
         else
         {
-            highLighter.HighLight(SvgFile.GetXml(new RelativeFilePath("axon1.svg")),
+            highLighter.SvgElementChangesHighLight(SvgFile.GetXml(new RelativeFilePath("axon1.svg")),
                 new ColorOptionsForElement("#000000", "#C5CECE"));
         }
 

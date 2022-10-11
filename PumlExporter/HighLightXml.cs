@@ -2,20 +2,20 @@ using System.Xml;
 
 namespace PumlExporter;
 
-public abstract class HighLightXml
+public class HighLightXml
 {
-    
-    protected readonly XmlNamespaceManager NamespaceManager;
-    protected readonly XmlDocument XmlDocument;
+    private readonly XmlNamespaceManager _namespaceManager;
+    private readonly XmlDocument _xmlDocument;
+    private bool _isChangesHighLighted;
 
 
-    protected HighLightXml(XmlDocument newXmlDocument, XmlNamespaceManager namespaceManager)
+    public HighLightXml(XmlDocument newXmlDocument, XmlNamespaceManager namespaceManager)
     {
-        XmlDocument = newXmlDocument;
-        NamespaceManager = namespaceManager;
+        _xmlDocument = newXmlDocument;
+        _namespaceManager = namespaceManager;
     }
 
-    public XmlDocument GetXmlDocument() => XmlDocument;
+    public XmlDocument GetXmlDocument() => _xmlDocument;
     private static void HighLightChildren(XmlElement node, bool newClass, ColorOptionsForElement colorOptions) // why static
     {
         if (newClass && node.Name == "rect")
@@ -28,11 +28,11 @@ public abstract class HighLightXml
             node.SetAttribute("font-size", 14.ToString());
         }
     }
-    public void HighLight(XmlDocument oldXmlDocument, ColorOptionsForElement options)
+    public void SvgElementChangesHighLight(XmlDocument oldXmlDocument, ColorOptionsForElement options)
     {
-        var newElements = XmlDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'elem_')]", NamespaceManager) ??
+        var newElements = _xmlDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'elem_')]", _namespaceManager) ??
                           throw new Exception("new XmlDocument doesn't have element nodes");
-        var oldElements = oldXmlDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'elem_')]", NamespaceManager) ??
+        var oldElements = oldXmlDocument.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'elem_')]", _namespaceManager) ??
                           throw new Exception("old XmlDocument doesn't have element nodes");
 
         foreach (XmlElement newElement in newElements)
@@ -57,5 +57,25 @@ public abstract class HighLightXml
                 }
             }
         }
+
+        _isChangesHighLighted = true;
+    }
+    public void SvgGlobalHighLight(string nodeName = "text",params Attribute[] attributes)// default parameter doesn't work??
+    {
+        if (_isChangesHighLighted)
+        {
+            throw new Exception("can't Globally high-light after high-lighted changes, consider apply this method before");
+        }
+        var nodes = _xmlDocument.SelectNodes("descendant::s:"+nodeName, _namespaceManager) ??
+                    throw new Exception("XmlDocument doesn't have text nodes");
+        foreach (XmlElement node in nodes)
+        {
+            foreach (var attribute in attributes)
+            {
+                node.SetAttribute(attribute.Parameter, attribute.Value);
+            }
+        }
+        
+        
     }
 }
