@@ -9,27 +9,29 @@ public static class HighLight
     {
         var oldXml = SvgFile.GetXml(new RelativeFilePath("axon1.svg"));
         var newXml = SvgFile.GetXml(new RelativeFilePath("axon2.svg"));
-
         var nameSpaceManager = new XmlNamespaceManager(oldXml.NameTable);
-        nameSpaceManager.AddNamespace("s", "http://www.w3.org/2000/svg");
-        nameSpaceManager.AddNamespace("xlink", "http://www.w3.org/1999/xlink");
         var highLighter = new HighLightXml();
-        //default value doesn't work
-        highLighter.SvgGlobalHighLight(XmlSelector.GetGlobalNodeList(newXml, nameSpaceManager, "text"),
-            new Attribute("fill", "#383838"),
-            new Attribute("font-size", "12"));
 
         void SvgElementChangesHighLight(ColorOptionsForElement colorOption)
         {
             highLighter!.SvgElementChangesHighLight(
                 XmlSelector.GetObjectNodeList(newXml!, nameSpaceManager!, "elem_"),
                 XmlSelector.GetObjectNodeList(oldXml!, nameSpaceManager!, "elem_"),
-                (ColorOptionsForElement)colorOption);
+                colorOption);
         }
+
+        nameSpaceManager.AddNamespace("s", "http://www.w3.org/2000/svg");
+        nameSpaceManager.AddNamespace("xlink", "http://www.w3.org/1999/xlink");
+
+        //default value doesn't work
+        highLighter.SvgGlobalHighLight(XmlSelector.GetGlobalNodeList(newXml, nameSpaceManager, "text"),
+            new Attribute("fill", "#383838"),
+            new Attribute("font-size", "12"));
+
 
         if (colorOptions.Length != 0)
         {
-            // Color Options For objects
+            // Color Options For objects(elems & links)
             foreach (var colorOption in colorOptions)
             {
                 if (colorOption.GetType() == typeof(ColorOptionsForElement))
