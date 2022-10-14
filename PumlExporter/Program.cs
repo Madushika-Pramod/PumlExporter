@@ -1,4 +1,4 @@
 ﻿using PumlExporter;
 
-HighLight.ExportFile(new RelativeFilePath("axon-colored.svg"));
+HighLight.Save(new RelativeFilePath("axon-colored.svg"));
 

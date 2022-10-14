@@ -4,7 +4,7 @@ namespace PumlExporter;
 
 public static class HighLight
 {
-    public static void ExportFile(RelativeFilePath updatedFilePath,
+    public static void Save(RelativeFilePath updatedFilePath,
         params ColorOptions[] colorOptions)
     {
         var oldXml = SvgFile.GetXml(new RelativeFilePath("axon1.svg"));
