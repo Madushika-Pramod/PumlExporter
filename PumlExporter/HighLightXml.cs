@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Xml;
 
 namespace PumlExporter;
@@ -5,24 +6,21 @@ namespace PumlExporter;
 public class HighLightXml
 {
     private bool _isChangesHighLighted;
-
-    private static void
-        HighLightChildren(XmlElement node, bool newClass, ColorOptionsForElement colorOptions) // why static
+    public readonly Dictionary<string, string> BackgroundNodes = new();
+    private Dictionary<string, Attribute[]> _options = null!;
+   
+    private static void HighLightChildren(IEnumerable newElement, IReadOnlyDictionary<string, Attribute[]> options)
     {
-        if (newClass && node.Name == "rect")
+        foreach (var node in newElement.Cast<XmlElement>()
+                     .Where(node => options.ContainsKey(node.Name)))
         {
-            node.SetAttribute("fill", colorOptions.RectColor);
-        }
-        else if (node.Name == "text")
-        {
-            node.SetAttribute("fill", colorOptions.TextColor);
-            node.SetAttribute("font-size", 14.ToString());
+            SetAttribute(node, options[node.Name]);
         }
     }
 
-    public void SvgElementChangesHighLight(XmlNodeList newElements,XmlNodeList oldElements, ColorOptionsForElement options)
+    private void HighLightElement(IReadOnlyDictionary<string, Attribute[]> options, XmlNodeList newElements,
+        XmlNodeList oldElements)
     {
-
         foreach (XmlElement newElement in newElements)
         {
             var key = newElement.GetAttribute("id");
@@ -31,37 +29,56 @@ public class HighLightXml
 
             if (commonTextNodes.Count != 0)
             {
-                foreach (var child in newElement.Cast<XmlElement>().Where(n =>
-                             !commonTextNodes.ContainsKey(n.InnerText.GetHashCode())))
-                {
-                    HighLightChildren(child, false, options);
-                }
+                //HighLight existing object
+                HighLightChildren(
+                    newElement.Cast<XmlElement>()
+                        .Where(n => !commonTextNodes.ContainsKey(n.InnerText.GetHashCode())),
+                    _options);
             }
             else
             {
-                foreach (XmlElement newNode in newElement)
-                {
-                    HighLightChildren(newNode, true, options);
-                }
+                //HighLight new object
+                HighLightChildren(newElement, options);
             }
+        }
+    }
+
+    public void SvgChangesHighLight(XmlNodeList newElements, XmlNodeList oldElements,
+        IEnumerable<XmlObject> objects)
+    {
+        foreach (var obj in objects)
+        {
+            _options = new Dictionary<string, Attribute[]>(obj.Options);
+            if (!_options.Remove(BackgroundNodes[obj.ObjectType]))
+            {
+                throw new Exception("color option for background node is not set");
+            }
+
+            HighLightElement(obj.Options, newElements, oldElements);
         }
 
         _isChangesHighLighted = true;
     }
-
-    public void SvgGlobalHighLight(XmlNodeList nodes, params Attribute[] attributes) // default parameter doesn't work??
+    
+    public void SvgGlobalHighLight(XmlNodeList nodes, params Attribute[] attributes)
     {
         if (_isChangesHighLighted)
         {
             throw new Exception(
                 "can't Globally high-light after high-lighted changes, consider apply this method before");
         }
+
         foreach (XmlElement node in nodes)
         {
-            foreach (var attribute in attributes)
-            {
-                node.SetAttribute(attribute.Parameter, attribute.Value);
-            }
+            SetAttribute(node, attributes);
+        }
+    }
+
+    private static void SetAttribute(XmlElement node, IEnumerable<Attribute> attributes)
+    {
+        foreach (var attribute in attributes)
+        {
+            node.SetAttribute(attribute.Parameter, attribute.Value);
         }
     }
 }
