@@ -7,15 +7,11 @@ public class HighLightXml
 {
     private bool _isChangesHighLighted;
     private readonly Selector _selector = new ();
-
-    private readonly Dictionary<ObjectType, string> _backgroundNodes;
+    private readonly Dictionary<ObjectType, string> _backgroundNodes = new ();
     private Dictionary<string, SvgAttribute[]> _options = null!;
-
-    private HighLightXml(Builder builder)
-    {
-        _backgroundNodes = builder.BackgroundNodes;
-    }
-
+    
+    public void AddBackgroundNodes(ObjectType objectType, string nodeType) =>
+        _backgroundNodes.Add(objectType, nodeType);
     private static void HighLightChildren(IEnumerable newElement, IReadOnlyDictionary<string, SvgAttribute[]> options)
     {
         foreach (var node in newElement.Cast<XmlElement>()
@@ -49,13 +45,6 @@ public class HighLightXml
             }
         }
     }
-
-    // public void SvgChangesHighLight(XmlDocument oldDocument,XmlDocument newDocument, IEnumerable<XmlObject> objects)
-    // {
-    //     _selector.SetDocument(newDocument);
-    //     SvgChangesHighLight(oldDocument,objects);
-    // }
-
     public void SvgChangesHighLight(XmlDocument oldDocument,XmlDocument newDocument, IEnumerable<XmlObject> objects)
     {
         foreach (var obj in objects)
@@ -100,32 +89,13 @@ public class HighLightXml
 
     private class Selector
     {
-        // private XmlDocument? _document;
         private XmlNamespaceManager? _namespaceManager;
-
-        // public void SetDocument(XmlDocument document)
-        // {
-        //     if (_document != null) return;
-        //     _document = document;
-        //     SetNamespaceManager();
-        //
-        // }
         private void SetNamespaceManager(XmlDocument document)
         {
             _namespaceManager = new XmlNamespaceManager(document.NameTable);
             _namespaceManager.AddNamespace("s", "http://www.w3.org/2000/svg");
             _namespaceManager.AddNamespace("xlink", "http://www.w3.org/1999/xlink");
         }
-
-        // public XmlNodeList GetNodeList(ObjectType objectType)
-        // {
-        //     if (_document == null)
-        //     {
-        //         throw new Exception("New xml document is not set");
-        //     }
-        //
-        //     return GetNodeList(objectType, _document);
-        // }
 
         public XmlNodeList GetNodeList(ObjectType objectType, XmlDocument document)
         {
@@ -142,37 +112,11 @@ public class HighLightXml
 
         public XmlNodeList GetNodeList(string nodeName, XmlDocument newDocument)
         {
-            // _document = newDocument;
             SetNamespaceManager(newDocument);
             
-            // if (_namespaceManager == null)
-            // {
-            //     
-            //     throw new Exception("name space manager is not set");
-            // }
-
             return newDocument.SelectNodes("descendant::s:" + nodeName, _namespaceManager!) ??
                    throw new Exception("XmlDocument doesn't have element nodes");
         }
     }
-
-    public class Builder
-    {
-        internal readonly Dictionary<ObjectType, string> BackgroundNodes = new();
-        // internal Selector getSelector => Selector;
-        // private Selector Selector = new();
-        
-
-        public Builder AddBackgroundNodes(ObjectType objectType, string nodeType)
-        {
-            BackgroundNodes.Add(objectType, nodeType);
-            return this;
-        }
-
-
-        public HighLightXml Build()
-        {
-            return new HighLightXml(this);
-        }
-    }
+    
 }

@@ -15,10 +15,8 @@ var options = new Dictionary<string, SvgAttribute[]>
 var xmlObject = new XmlObject(options, ObjectType.Element);
 
 // set new xml for selector
-var highLighter = new HighLightXml.Builder()
-    .AddBackgroundNodes(xmlObject.ObjectType, "rect")
-    .Build();
-
+var highLighter = new HighLightXml();
+highLighter.AddBackgroundNodes(xmlObject.ObjectType, "rect");
 highLighter.SvgGlobalHighLight("text", newXml,
     new SvgAttribute("fill", "#383838"),
     new SvgAttribute("font-size", "12"));
