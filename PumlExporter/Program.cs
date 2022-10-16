@@ -23,6 +23,6 @@ highLighter.SvgGlobalHighLight("text", newXml,
     new SvgAttribute("fill", "#383838"),
     new SvgAttribute("font-size", "12"));
 
-highLighter.SvgChangesHighLight(oldXml, new[] { xmlObject });
+highLighter.SvgChangesHighLight(oldXml,newXml, new[] { xmlObject });
 
 newXml.Save(new FilePath("../../../axon-colored.svg").Path);

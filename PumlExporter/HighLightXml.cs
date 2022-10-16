@@ -50,17 +50,17 @@ public class HighLightXml
         }
     }
 
-    public void SvgChangesHighLight(XmlDocument oldDocument,XmlDocument newDocument, IEnumerable<XmlObject> objects)
-    {
-        _selector.SetDocument(newDocument);
-        SvgChangesHighLight(oldDocument,objects);
-    }
+    // public void SvgChangesHighLight(XmlDocument oldDocument,XmlDocument newDocument, IEnumerable<XmlObject> objects)
+    // {
+    //     _selector.SetDocument(newDocument);
+    //     SvgChangesHighLight(oldDocument,objects);
+    // }
 
-    public void SvgChangesHighLight(XmlDocument oldDocument, IEnumerable<XmlObject> objects)
+    public void SvgChangesHighLight(XmlDocument oldDocument,XmlDocument newDocument, IEnumerable<XmlObject> objects)
     {
         foreach (var obj in objects)
         {
-            var newElements = _selector.GetNodeList(obj.ObjectType);
+            var newElements = _selector.GetNodeList(obj.ObjectType,newDocument);
             var oldElements = _selector.GetNodeList(obj.ObjectType, oldDocument);
 
             //make a copy
@@ -100,39 +100,39 @@ public class HighLightXml
 
     private class Selector
     {
-        private XmlDocument? _document;
+        // private XmlDocument? _document;
         private XmlNamespaceManager? _namespaceManager;
 
-        public void SetDocument(XmlDocument document)
+        // public void SetDocument(XmlDocument document)
+        // {
+        //     if (_document != null) return;
+        //     _document = document;
+        //     SetNamespaceManager();
+        //
+        // }
+        private void SetNamespaceManager(XmlDocument document)
         {
-            if (_document != null) return;
-            _document = document;
-            SetNamespaceManager();
-
-        }
-        private void SetNamespaceManager()
-        {
-            _namespaceManager = new XmlNamespaceManager(_document!.NameTable);
+            _namespaceManager = new XmlNamespaceManager(document.NameTable);
             _namespaceManager.AddNamespace("s", "http://www.w3.org/2000/svg");
             _namespaceManager.AddNamespace("xlink", "http://www.w3.org/1999/xlink");
         }
 
-        public XmlNodeList GetNodeList(ObjectType objectType)
-        {
-            if (_document == null)
-            {
-                throw new Exception("New xml document is not set");
-            }
-
-            return GetNodeList(objectType, _document);
-        }
+        // public XmlNodeList GetNodeList(ObjectType objectType)
+        // {
+        //     if (_document == null)
+        //     {
+        //         throw new Exception("New xml document is not set");
+        //     }
+        //
+        //     return GetNodeList(objectType, _document);
+        // }
 
         public XmlNodeList GetNodeList(ObjectType objectType, XmlDocument document)
         {
             if (_namespaceManager == null)
             {
-                _document = document;
-                SetNamespaceManager();
+                // _document = document;
+                SetNamespaceManager(document);
             }
 
             return document.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{objectType.ToText()}')]",
@@ -142,8 +142,8 @@ public class HighLightXml
 
         public XmlNodeList GetNodeList(string nodeName, XmlDocument newDocument)
         {
-            _document = newDocument;
-            SetNamespaceManager();
+            // _document = newDocument;
+            SetNamespaceManager(newDocument);
             
             // if (_namespaceManager == null)
             // {
@@ -151,7 +151,7 @@ public class HighLightXml
             //     throw new Exception("name space manager is not set");
             // }
 
-            return _document.SelectNodes("descendant::s:" + nodeName, _namespaceManager!) ??
+            return newDocument.SelectNodes("descendant::s:" + nodeName, _namespaceManager!) ??
                    throw new Exception("XmlDocument doesn't have element nodes");
         }
     }
