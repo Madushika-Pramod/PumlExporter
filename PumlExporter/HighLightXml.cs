@@ -71,7 +71,7 @@ public class HighLightXml
         _isChangesHighLighted = true;
     }
 
-    public void SvgGlobalHighLight(string nodeType, params SvgAttribute[] attributes)
+    public void SvgGlobalHighLight(string nodeType, XmlDocument newDocument, params SvgAttribute[] attributes)
     {
         if (_isChangesHighLighted)
         {
@@ -79,7 +79,7 @@ public class HighLightXml
                 "can't Globally high-light after high-lighted changes, consider apply this method before");
         }
 
-        foreach (XmlElement node in _select.GetNodeList(nodeType))
+        foreach (XmlElement node in _select.GetNodeList(nodeType, newDocument))
         {
             SetAttribute(node, attributes);
         }
@@ -95,13 +95,8 @@ public class HighLightXml
 
     internal class Selector
     {
-        private readonly XmlDocument _document;
+        private XmlDocument _document = null!;
         private XmlNamespaceManager _namespaceManager = null!;
-
-        public Selector(XmlDocument document)
-        {
-            _document = document;
-        }
 
         internal void SetNamespaceManager()
         {
@@ -112,6 +107,11 @@ public class HighLightXml
 
         public XmlNodeList GetNodeList(ObjectType objectType)
         {
+            if (_document == null)
+            {
+                throw new Exception("New xml document is not set");
+            }
+
             return GetNodeList(objectType, _document);
         }
 
@@ -127,8 +127,10 @@ public class HighLightXml
                    throw new Exception("XmlDocument doesn't have element nodes");
         }
 
-        public XmlNodeList GetNodeList(string nodeName)
+        public XmlNodeList GetNodeList(string nodeName, XmlDocument newDocument)
         {
+            _document = newDocument;
+            SetNamespaceManager();
             if (_namespaceManager == null)
             {
                 throw new Exception("name space manager is not set");
@@ -142,7 +144,7 @@ public class HighLightXml
     public class Builder
     {
         internal readonly Dictionary<ObjectType, string> BackgroundNodes = new();
-        internal Selector Select = new(new XmlDocument());
+        internal Selector Select = new();
 
         public Builder AddBackgroundNodes(ObjectType objectType, string nodeType)
         {
@@ -150,14 +152,11 @@ public class HighLightXml
             return this;
         }
 
-        public Builder SetSelector(XmlDocument document)
+
+        public HighLightXml Build()
         {
-            Select = new Selector(document);
-            Select.SetNamespaceManager();
-            return this;
+            Select = new Selector();
+            return new HighLightXml(this);
         }
-
-
-        public HighLightXml Build() => new(this);
     }
 }
