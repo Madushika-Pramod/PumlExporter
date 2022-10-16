@@ -1,35 +1,29 @@
-﻿using System.Xml;
-using PumlExporter;
-using Attribute = PumlExporter.Attribute;
+﻿using PumlExporter;
 
 var oldXml = SvgFile.GetXml(new FilePath("../../../axon1.svg"));
 var newXml = SvgFile.GetXml(new FilePath("../../../axon2.svg"));
-var nameSpaceManager = new XmlNamespaceManager(oldXml.NameTable);
-nameSpaceManager.AddNamespace("s", "http://www.w3.org/2000/svg");
-nameSpaceManager.AddNamespace("xlink", "http://www.w3.org/1999/xlink");
-
-var options = new Dictionary<string, Attribute[]>
+var options = new Dictionary<string, SvgAttribute[]>
 {
     {
         "text",
-        new[] { new Attribute("fill", "#000000"), new Attribute("font-size", "14") }
+        new[] { new SvgAttribute("fill", "#000000"), new SvgAttribute("font-size", "14") }
     },
     {
-        "rect", new[] { new Attribute("fill", "#C5CECE") }
+        "rect", new[] { new SvgAttribute("fill", "#C5CECE") }
     }
 };
-var xmlObject = new XmlObject(options,"elem_");
-var highLighter = new HighLightXml();
-highLighter.BackgroundNodes.Add(xmlObject.ObjectType,"rect");
+var xmlObject = new XmlObject(options, ObjectType.Element);
 
-highLighter.SvgGlobalHighLight(
-    XmlSelector.GetGlobalNodeList(newXml, nameSpaceManager, "text"),
-    new Attribute("fill", "#383838"),
-    new Attribute("font-size", "12"));
+// set new xml for selector
+var highLighter = new HighLightXml.Builder()
+    .AddBackgroundNodes(xmlObject.ObjectType, "rect")
+    .SetSelector(newXml)
+    .Build();
 
-highLighter.SvgChangesHighLight(
-    XmlSelector.GetObjectNodeList(newXml, nameSpaceManager,xmlObject.ObjectType),
-    XmlSelector.GetObjectNodeList(oldXml, nameSpaceManager,xmlObject.ObjectType),
-    new[] { xmlObject });
+highLighter.SvgGlobalHighLight("text",
+    new SvgAttribute("fill", "#383838"),
+    new SvgAttribute("font-size", "12"));
+
+highLighter.SvgChangesHighLight(oldXml, new[] { xmlObject });
 
 newXml.Save(new FilePath("../../../axon-colored.svg").Path);
