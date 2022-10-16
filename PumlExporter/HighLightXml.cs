@@ -6,7 +6,7 @@ namespace PumlExporter;
 public class HighLightXml
 {
     private bool _isChangesHighLighted;
-    private readonly Selector _select;
+    private readonly Selector _selector = new ();
 
     private readonly Dictionary<ObjectType, string> _backgroundNodes;
     private Dictionary<string, SvgAttribute[]> _options = null!;
@@ -14,7 +14,6 @@ public class HighLightXml
     private HighLightXml(Builder builder)
     {
         _backgroundNodes = builder.BackgroundNodes;
-        _select = builder.Select;
     }
 
     private static void HighLightChildren(IEnumerable newElement, IReadOnlyDictionary<string, SvgAttribute[]> options)
@@ -51,12 +50,18 @@ public class HighLightXml
         }
     }
 
+    public void SvgChangesHighLight(XmlDocument oldDocument,XmlDocument newDocument, IEnumerable<XmlObject> objects)
+    {
+        _selector.SetDocument(newDocument);
+        SvgChangesHighLight(oldDocument,objects);
+    }
+
     public void SvgChangesHighLight(XmlDocument oldDocument, IEnumerable<XmlObject> objects)
     {
         foreach (var obj in objects)
         {
-            var newElements = _select.GetNodeList(obj.ObjectType);
-            var oldElements = _select.GetNodeList(obj.ObjectType, oldDocument);
+            var newElements = _selector.GetNodeList(obj.ObjectType);
+            var oldElements = _selector.GetNodeList(obj.ObjectType, oldDocument);
 
             //make a copy
             _options = new Dictionary<string, SvgAttribute[]>(obj.Options);
@@ -79,7 +84,7 @@ public class HighLightXml
                 "can't Globally high-light after high-lighted changes, consider apply this method before");
         }
 
-        foreach (XmlElement node in _select.GetNodeList(nodeType, newDocument))
+        foreach (XmlElement node in _selector.GetNodeList(nodeType, newDocument))
         {
             SetAttribute(node, attributes);
         }
@@ -93,14 +98,21 @@ public class HighLightXml
         }
     }
 
-    internal class Selector
+    private class Selector
     {
-        private XmlDocument _document = null!;
-        private XmlNamespaceManager _namespaceManager = null!;
+        private XmlDocument? _document;
+        private XmlNamespaceManager? _namespaceManager;
 
-        internal void SetNamespaceManager()
+        public void SetDocument(XmlDocument document)
         {
-            _namespaceManager = new XmlNamespaceManager(_document.NameTable);
+            if (_document != null) return;
+            _document = document;
+            SetNamespaceManager();
+
+        }
+        private void SetNamespaceManager()
+        {
+            _namespaceManager = new XmlNamespaceManager(_document!.NameTable);
             _namespaceManager.AddNamespace("s", "http://www.w3.org/2000/svg");
             _namespaceManager.AddNamespace("xlink", "http://www.w3.org/1999/xlink");
         }
@@ -119,11 +131,12 @@ public class HighLightXml
         {
             if (_namespaceManager == null)
             {
-                throw new Exception("name space manager is not set");
+                _document = document;
+                SetNamespaceManager();
             }
 
             return document.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{objectType.ToText()}')]",
-                       _namespaceManager) ??
+                       _namespaceManager!) ??
                    throw new Exception("XmlDocument doesn't have element nodes");
         }
 
@@ -131,12 +144,14 @@ public class HighLightXml
         {
             _document = newDocument;
             SetNamespaceManager();
-            if (_namespaceManager == null)
-            {
-                throw new Exception("name space manager is not set");
-            }
+            
+            // if (_namespaceManager == null)
+            // {
+            //     
+            //     throw new Exception("name space manager is not set");
+            // }
 
-            return _document.SelectNodes("descendant::s:" + nodeName, _namespaceManager) ??
+            return _document.SelectNodes("descendant::s:" + nodeName, _namespaceManager!) ??
                    throw new Exception("XmlDocument doesn't have element nodes");
         }
     }
@@ -144,7 +159,9 @@ public class HighLightXml
     public class Builder
     {
         internal readonly Dictionary<ObjectType, string> BackgroundNodes = new();
-        internal Selector Select = new();
+        // internal Selector getSelector => Selector;
+        // private Selector Selector = new();
+        
 
         public Builder AddBackgroundNodes(ObjectType objectType, string nodeType)
         {
@@ -155,7 +172,6 @@ public class HighLightXml
 
         public HighLightXml Build()
         {
-            Select = new Selector();
             return new HighLightXml(this);
         }
     }
