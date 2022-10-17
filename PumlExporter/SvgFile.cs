@@ -18,6 +18,8 @@ public static class SvgFile
     {
         XmlDocument xmlDocument = new();
         xmlDocument.Load(reader);
+        reader.Dispose();
         return xmlDocument;
     }
+    
 }
