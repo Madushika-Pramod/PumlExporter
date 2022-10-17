@@ -9,9 +9,8 @@ var options = new Dictionary<string, SvgAttribute[]>
         "rect", new[] { new SvgAttribute("fill", "#C5CECE") }
     }
 };
-var xmlObject = new XmlObject(options, ObjectType.Element);
+var xmlObject = new XmlObject(options,"rect",ObjectType.Element);
 var highLighter = new HighLightXml();
-highLighter.AddBackgroundNodes(xmlObject.ObjectType, "rect");
 
 highLighter.SvgGlobalHighLight("text","../../../axon2.svg",
     new SvgAttribute("fill", "#383838"),

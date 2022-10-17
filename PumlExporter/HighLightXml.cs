@@ -7,15 +7,11 @@ public class HighLightXml
 {
     private bool _isChangesHighLighted;
     private readonly Selector _selector = new();
-    private readonly Dictionary<ObjectType, string> _backgroundNodes = new();
 
     private Dictionary<string, SvgAttribute[]> _options = null!;
 
     //todo what is this conditional-> NewDocument?
-    public void SaveFile(string path) => _selector.NewDocument?.Save(new FilePath(path).Path);
-
-    public void AddBackgroundNodes(ObjectType objectType, string nodeType) =>
-        _backgroundNodes.Add(objectType, nodeType);
+    public void SaveFile(string path) => _selector.NewDocument?.Save(path);
 
     private static void HighLightChildren(IEnumerable newElement, IReadOnlyDictionary<string, SvgAttribute[]> options)
     {
@@ -74,7 +70,7 @@ public class HighLightXml
 
             //make a copy
             _options = new Dictionary<string, SvgAttribute[]>(obj.Options);
-            if (!_options.Remove(_backgroundNodes[obj.ObjectType]))
+            if (!_options.Remove(obj.BackgroundNode))
             {
                 throw new Exception("color option for background node is not set");
             }
@@ -87,7 +83,7 @@ public class HighLightXml
 
     public void SvgGlobalHighLight(string nodeType, string filePath, params SvgAttribute[] attributes)
     {
-        SvgGlobalHighLight(nodeType, SvgFile.GetXml(new FilePath(filePath)), attributes);
+        SvgGlobalHighLight(nodeType, SvgFile.GetXml(filePath), attributes);
     }
 
     public void SvgGlobalHighLight(string nodeType, XmlDocument newDocument, params SvgAttribute[] attributes)
@@ -120,8 +116,6 @@ public class HighLightXml
         private XmlNamespaceManager? _namespaceManager;
 
         public XmlDocument? NewDocument;
-        // private XmlDocument? _oldDocument;
-
         public void SetNamespaceManager(XmlDocument document)
         {
             _namespaceManager = new XmlNamespaceManager(document.NameTable);
@@ -157,9 +151,9 @@ public class HighLightXml
             }
 
             if (_namespaceManager != null && NewDocument != null)
-                return GetNodeList(objectType, SvgFile.GetXml(new FilePath(filePath)));
+                return GetNodeList(objectType, SvgFile.GetXml(filePath));
             
-            NewDocument = SvgFile.GetXml(new FilePath(filePath));
+            NewDocument = SvgFile.GetXml(filePath);
             SetNamespaceManager(NewDocument);
             return GetNodeList(objectType, NewDocument);
 
