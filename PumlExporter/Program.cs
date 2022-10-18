@@ -1,4 +1,8 @@
 ﻿using PumlExporter;
+
+var oldSvg = File.ReadAllText("../../../axon1.svg");
+var newSvg = File.ReadAllText("../../../axon2.svg");
+
 var options = new Dictionary<string, SvgAttribute[]>
 {
     {
@@ -9,13 +13,15 @@ var options = new Dictionary<string, SvgAttribute[]>
         "rect", new[] { new SvgAttribute("fill", "#C5CECE") }
     }
 };
+
 var xmlObject = new XmlObject(options,"rect",ObjectType.Element);
 var highLighter = new HighLightXml();
 
-highLighter.SvgGlobalHighLight("text","../../../axon2.svg",
+highLighter.SvgGlobalHighLight("text",newSvg,
     new SvgAttribute("fill", "#383838"),
     new SvgAttribute("font-size", "12"));
 
-highLighter.SvgChangesHighLight("../../../axon1.svg", new[] { xmlObject });
+highLighter.SvgChangesHighLight(oldSvg, new[] { xmlObject });
 
-highLighter.SaveFile("../../../axon-colored.svg");
+var highLightedFile = highLighter.GetHighLightedFile();
+highLightedFile?.Save("../../../axon-colored.svg");
