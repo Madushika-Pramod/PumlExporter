@@ -11,7 +11,7 @@ public class HighLightXml
     private Dictionary<string, SvgAttribute[]> _options = null!;
 
     //todo what is this conditional-> NewDocument?
-    public XmlDocument? GetHighLightedFile() => _selector.NewDocument;
+    public string GetHighLightedSvg() => _selector.NewDocument.InnerXml;
 
     private static void HighLightChildren(IEnumerable newElement, IReadOnlyDictionary<string, SvgAttribute[]> options)
     {
@@ -55,19 +55,19 @@ public class HighLightXml
     // shouldn't make private
     public void SvgChangesHighLight(string oldSvg, string? newSvg, IEnumerable<XmlObject> objects)
     {
-        if (_selector.NewDocument != null && newSvg != null)
+        if (_selector.NewDocument.InnerXml != "" && newSvg != null)
         {
             newSvg = null;
         }
-        else if (_selector.NewDocument == null && newSvg == null)
+        else if (_selector.NewDocument.InnerXml == "" && newSvg == null)
         {
             throw new Exception("both old file path and new file path should be provided");
         }
 
         foreach (var obj in objects)
         {
-            var newElements = _selector.GetNodeList(obj.ObjectType, newSvg);
-            var oldElements = _selector.GetNodeList(obj.ObjectType, oldSvg);
+            var newElements = _selector.GetNewSvgNodeList(obj.ObjectType, newSvg);
+            var oldElements = _selector.GetOldSvgNodeList(obj.ObjectType, oldSvg);
 
             //make a copy
             _options = new Dictionary<string, SvgAttribute[]>(obj.Options);
@@ -89,12 +89,13 @@ public class HighLightXml
             throw new Exception(
                 "can't Globally high-light after high-lighted changes, consider apply this method before");
         }
+
         foreach (XmlElement node in _selector.GetNodeList(newSvg, nodeType))
         {
             SetAttribute(node, attributes);
         }
-        
     }
+
     private static void SetAttribute(XmlElement node, IEnumerable<SvgAttribute> attributes)
     {
         foreach (var attribute in attributes)
@@ -124,7 +125,7 @@ public class HighLightXml
     {
         private XmlNamespaceManager? _namespaceManager;
 
-        public XmlDocument? NewDocument;
+        public XmlDocument NewDocument = new();
 
         private void SetNamespaceManager(XmlDocument document)
         {
@@ -135,75 +136,61 @@ public class HighLightXml
 
         public void ResetSector()
         {
-            NewDocument = null;
+            NewDocument = new XmlDocument();
             _namespaceManager = null;
         }
 
         private XmlDocument GetPumlNodeList(string svgBody)
         {
             var xml = PumlFile.GetXmlByText(svgBody);
-            if (_namespaceManager == null)
-            {
-                SetNamespaceManager(xml);
-            }
-            
-            var doc = xml.SelectNodes($"//s:g[1]/s:g[1]", _namespaceManager!)?[0];
+            if (_namespaceManager == null) SetNamespaceManager(xml);
+
+            var doc = xml.SelectNodes("//s:g[1]/s:g[1]", _namespaceManager!)?[0];
             if (doc is { Name: "g" } &&
                 doc.OuterXml.StartsWith("<g id=\"elem_") &&
                 doc.OwnerDocument?.Implementation.ToString() == "System.Xml.XmlImplementation" &&
                 doc.OwnerDocument.DocumentElement?.Name == "svg")
-            {
-                NewDocument ??= xml;
                 return xml;
-            }
 
             _namespaceManager = null;
-            throw new Exception("Invalid Puml file");
+            throw new Exception("Invalid puml file");
         }
 
-        private XmlNodeList GetPumlNodeList(ObjectType objectType, XmlDocument document)
-        {
-            return document.SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{objectType.ToText()}')]",
-                _namespaceManager!) ?? throw new Exception("Invalid Puml file");
-        }
+        private XmlNodeList GetNodeList(ObjectType objectType, XmlDocument document) => document
+                .SelectNodes($"//s:g[1]/s:g[starts-with(@id,'{objectType.ToText()}')]", _namespaceManager!)
+            ?? throw new Exception("Invalid puml file");
+        // {
+        //     return 
+        // }
 
         public XmlNodeList GetNodeList(string svgBody, string nodeName)
+            => GetNodeList(GetPumlNodeList(svgBody), nodeName);
+        
+        public XmlNodeList GetOldSvgNodeList(ObjectType objectType, string svgBody)
+            => GetNodeList(objectType,GetPumlNodeList(svgBody));
+        
+        public XmlNodeList GetNewSvgNodeList(ObjectType objectType, string? svgBody)
         {
-            return GetNodeList(GetPumlNodeList(svgBody), nodeName);
-
-        }
-
-        private XmlNodeList GetNodeList(XmlDocument newDocument, string nodeName)
-        {
-            if (NewDocument != null)
-                return NewDocument.SelectNodes("descendant::s:" + nodeName, _namespaceManager!) ??
-                       throw new Exception("Invalid Puml file");
-            
-            return newDocument.SelectNodes("descendant::s:" + nodeName, _namespaceManager!) ??
-                   throw new Exception("Invalid Puml file");
-        }
-
-        public XmlNodeList GetNodeList(ObjectType objectType, string? svgBody)
-        {
-            if (svgBody == null)
+            if (NewDocument.InnerXml != "")
             {
                 // new doc is set by global high lighter
-                if (NewDocument != null)
-                {
-                    return GetPumlNodeList(objectType, NewDocument);
-                }
-
-                throw new Exception("Svg file is not provided");
+                return GetNodeList(objectType, NewDocument);
             }
 
-            if (_namespaceManager != null && NewDocument != null)
-            {
-                // old list
-                return GetPumlNodeList(objectType, GetPumlNodeList(svgBody));
-            }
+            if (svgBody == null) throw new Exception("Svg file is not provided");
 
-            // new list
-            return GetPumlNodeList(objectType, GetPumlNodeList(svgBody));
+            NewDocument = GetPumlNodeList(svgBody);
+            return GetNodeList(objectType, NewDocument);
         }
+        
+        private XmlNodeList GetNodeList(XmlDocument newDocument, string nodeName)
+        {
+            if (NewDocument.InnerXml == "") NewDocument = newDocument;
+
+            return NewDocument.SelectNodes("descendant::s:" + nodeName, _namespaceManager!) ??
+                   throw new Exception("Invalid puml file");
+        }
+
+        
     }
 }

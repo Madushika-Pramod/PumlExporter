@@ -22,6 +22,4 @@ highLighter.SvgGlobalHighLight("text",newSvg,
     new SvgAttribute("font-size", "12"));
 
 highLighter.SvgChangesHighLight(oldSvg, new[] { xmlObject });
-
-var highLightedFile = highLighter.GetHighLightedFile();
-highLightedFile?.Save("../../../axon-colored.svg");
+File.WriteAllText("../../../axon-colored.svg",highLighter.GetHighLightedSvg());
